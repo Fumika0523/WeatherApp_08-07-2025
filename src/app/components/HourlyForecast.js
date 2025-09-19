@@ -330,16 +330,24 @@ const filteredHourly = hourly;
                 {filteredHourly.map((h, i) => {
                   const isCurrent = i === currentIdx;
                   return (
-                    <div
-                      key={`hour-card-${h.key}`}
-                      className={`flex-shrink-0 w-28 text-center py-3 px-2 rounded-xl transition ${isCurrent ? "bg-white/30 ring-2 ring-white/20" : "bg-white/6"}`}
-                    >
-                      <div className="text-xs text-gray-200 mb-1">{h.label}</div>
-                      <div className="mb-1 text-xl">{getIcon(h.code, h.isDay)}</div>
-                      <div className="font-semibold">{h.temp ?? "—"}°</div>
-                      <div className="text-xs text-gray-300">Feels {h.feels ?? "—"}°</div>
-                      <div className="text-xs text-gray-300 mt-1">{h.precipDisplay ? `${h.precipDisplay}${h.precipIsProb ? "%" : " mm"}` : ""}</div>
+                    // Card
+                  <div
+                    key={`hour-card-${h.key}`}
+                    className={`flex-shrink-0  space-y-3 w-28 h-full flex flex-col items-start justify-center text-center py-3 px-2 rounded-xl transition  ${
+                      isCurrent
+                        ? "bg-white/30 ring-2 ring-white/20"
+                        : "bg-white/6"
+                    }`}
+                  >
+                    <div className="text-xs text-gray-200 mb-3">{h.label}</div>
+                    <div className="mb-1 text-xl">{getIcon(h.code, h.isDay)}</div>
+                    <div className="font-semibold">{h.temp ?? "—"}°</div>
+                    <div className="text-xs text-gray-300">Feels {h.feels ?? "—"}°</div>
+                    <div className="text-xs text-gray-300 mt-1">
+                      {h.precipDisplay ? `${h.precipDisplay}${h.precipIsProb ? "%" : " mm"}` : ""}
                     </div>
+                  </div>
+
                   );
                 })}
               </div>
