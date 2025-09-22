@@ -68,7 +68,6 @@ export default function WeatherDetails({ weatherData }) {
   const precip24 = (daily?.precipitation_sum?.[0] ?? null);
   const uvIndex = daily?.uv_index_max?.[0] ?? null;
   const pressure = current.pressure ?? daily?.surface_pressure_mean?.[0] ?? null;
-  const visibility = current.visibility ?? null; // may be meters; adapt if needed
   const dewPoint = calcDewPoint(temp, humidity);
   const windGust = current.windgust ?? current.windspeed_10m ?? null;
   const moonPhase = (daily?.moon_phase?.[0] != null ? Math.round(daily.moon_phase[0] * 100) : null);
@@ -175,13 +174,6 @@ export default function WeatherDetails({ weatherData }) {
       note: "Low. Tomorrow's pollen count expected to be similar."
     },
     {
-      id: "vision_pressure",
-      title: "Visibility / Pressure",
-      value: `${visibility ? (visibility > 1000 ? `${Math.round(visibility/1000)} km` : `${visibility} m`) : "—"} / ${fmt(pressure, " mb")}`,
-      small: "Excellent / Rising slowly",
-      note: "Visibility & pressure expected to be similar; pressure rising slowly."
-    },
-    {
       id: "moon",
       title: "Moon",
       value: moonPhase != null ? `${moonPhase}%` : "—",
@@ -204,8 +196,8 @@ export default function WeatherDetails({ weatherData }) {
             className="bg-white/10 p-4 rounded-2xl flex flex-col justify-between h-full shadow-sm hover:scale-[1.01] transition-transform"
           >
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-200">{c.title}</div>
-              <div className="text-2xl text-white/90">
+              <div className="text-[16px] text-gray-200">{c.title}</div>
+              <div className="text-3xl text-white/90">
                 {c.id === "wind" && <FaWind />}
                 {c.id === "wind_gust" && <FaWind />}
                 {c.id === "humidity" && <FaTint />}
@@ -224,8 +216,8 @@ export default function WeatherDetails({ weatherData }) {
 
             <div className="mt-3">
               <div className="text-2xl font-bold">{c.value}</div>
-              <div className="text-sm text-gray-300 mt-1">{c.small}</div>
-              {c.note && <p className="text-xs text-gray-400 mt-2">{c.note}</p>}
+              <div className="text-sm text-gray-200 mt-1">{c.small}</div>
+              {c.note && <p className="text-xs text-gray-300 mt-2">{c.note}</p>}
             </div>
           </div>
         ))}

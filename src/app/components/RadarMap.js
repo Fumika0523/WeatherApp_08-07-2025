@@ -27,7 +27,8 @@ export default function RadarMap({ coords }) {
   }
 
   return (
-    <div className="w-full border-4 h-64 rounded-xl overflow-hidden">
+      <div className="w-full border-4 h-64 rounded-xl overflow-hidden">
+
       <MapContainer
         center={[coords.latitude, coords.longitude]}
         zoom={8}
