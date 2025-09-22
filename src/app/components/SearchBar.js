@@ -82,8 +82,6 @@ export default function SearchBar({ setWeatherData, setCoords, setLoading, setEr
         hourly: weatherData.hourly,
         daily: weatherData.daily,
       });
-
-      setCoords({ lat: latitude, lon: longitude });
       addFavorite(name);
     } catch (err) {
       console.error("Weather fetch error:", err);

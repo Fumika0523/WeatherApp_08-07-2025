@@ -9,14 +9,13 @@ import CurrentWeather from "./components/CurrentWeather";
 import HourlyForecast from "./components/HourlyForecast";
 import DailyForecast from "./components/DailyForecast";
 import WeatherDetails from "./components/WeatherDetails";
+import SunInfo from "./components/SunInfo";
 
 // Client-only components
-const RadarMap = dynamic(() => import("./components/RadarMap"), { ssr: false });
 const Background = dynamic(() => import("./components/Background"), { ssr: false });
 
 export default function HomePage() {
   const [weatherData, setWeatherData] = useState(null);
-  const [coords, setCoords] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedDay, setSelectedDay] = useState(null); // null = show all hours
@@ -66,7 +65,6 @@ console.log("Daily forecast days:", weatherData?.daily?.time?.length);
         {/* Search Bar */}
         <SearchBar
           setWeatherData={setWeatherData}
-          setCoords={setCoords}
           setLoading={setLoading}
           setError={setError}
         />
@@ -79,14 +77,15 @@ console.log("Daily forecast days:", weatherData?.daily?.time?.length);
         {weatherData ? (
           <div className="w-full max-w-4xl space-y-6">
             {/* Row: CurrentWeather + RadarMap */}
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <CurrentWeather weatherData={weatherData} />
-              </div>
-              <div className="flex-1">
-                <RadarMap coords={coords} />
-              </div>
+          <div className="flex flex-col items-center justify-center lg:flex-row gap-4">
+            <div className="w-full lg:w-auto">
+              <CurrentWeather weatherData={weatherData} />
             </div>
+            <div className="w-full lg:w-auto">
+              <SunInfo daily={weatherData?.daily} />
+            </div>
+          </div>
+
 
             {/* Daily Forecast */}
             <DailyForecast

@@ -14,7 +14,6 @@ export default function Favorites({ setWeatherData, setCoords }) {
 
   const loadCity = (city) => {
     setWeatherData(city.weatherData);
-    setCoords(city.coords);
   };
 
   const removeCity = (index) => {

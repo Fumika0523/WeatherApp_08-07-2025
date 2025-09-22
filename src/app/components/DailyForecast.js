@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useRef } from "react";
-import { FaSun, FaCloud, FaCloudRain, FaSnowflake, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {  FaCloud, FaCloudRain, FaSnowflake, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { IoIosSunny } from "react-icons/io";
 
 function getWeatherIcon(code, isDay) {
-  if (code === 0) return <FaSun />;
+  if (code === 0) return <IoIosSunny className="text-yellow-500"/>;
   if ([1, 2, 3].includes(code)) return <FaCloud />;
   if ([51, 61, 80].includes(code)) return <FaCloudRain />;
   if ([71, 73, 75, 77, 85, 86].includes(code)) return <FaSnowflake />;

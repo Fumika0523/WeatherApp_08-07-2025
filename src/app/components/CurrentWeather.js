@@ -12,6 +12,7 @@ import {
   FaCloudRain,
   FaSnowflake,
 } from "react-icons/fa";
+import { IoIosSunny } from "react-icons/io";
 
 export default function CurrentWeather({ weatherData }) {
   if (!weatherData) return null;
@@ -72,7 +73,7 @@ export default function CurrentWeather({ weatherData }) {
   };
 
   const getWeatherIcon = (code, isDay = true) => {
-    if (code === 0) return <FaSun size={80} />;
+    if (code === 0) return <IoIosSunny className="text-yellow-500" size={80} />;
     if ([1, 2, 3].includes(code)) return <FaCloud size={80}/>;
     if ([45, 48].includes(code)) return <FaCloud size={80} />;
     if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return <FaCloudRain size={80}/>;
@@ -204,9 +205,9 @@ const visibility = current?.visibility != null
               {tempRounded != null ? `${tempRounded}°C` : "—"}
               </p>
               {/* Low */}
-              {/* <p className="text-md text-gray-200 mt-1">
+              <p className="text-md text-gray-200 mt-1">
               {daily?.temperature_2m_min ? `Low: ${lowToday ?? "—"}°` : ""}
-              </p> */}
+              </p>
             </div>
             {/* Right */}
             <div className="flex flex-col items-start justify-start">         

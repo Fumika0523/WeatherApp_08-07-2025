@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { IoIosSunny } from "react-icons/io";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -19,6 +20,8 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
+import { RiLineChartLine } from "react-icons/ri";
+import { CiCircleList } from "react-icons/ci";
 
 /* ---------------------- Helpers ---------------------- */
 function toHourLabel(isoOrMs) {
@@ -43,7 +46,7 @@ function closestIndex(times, now = new Date()) {
   return best;
 }
 function getIcon(code, isDay) {
-  if (code === 0) return isDay ? <FaSun /> : <FaSun />;
+  if (code === 0) return isDay ? <IoIosSunny className="text-yellow-500"/> : <IoIosSunny className="text-yellow-500" />;
   if ([1, 2, 3].includes(code)) return <FaCloud />;
   if ([45, 48].includes(code)) return <FaCloud />;
   if ([51, 61, 80].includes(code)) return <FaCloudRain />;
@@ -56,9 +59,9 @@ function ChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0].payload;
   return (
-    <div
+    <div className=""
       style={{
-        minWidth: 220,
+        minWidth: 150,
         background: "rgba(6,8,20,0.9)",
         padding: 12,
         borderRadius: 10,
@@ -66,11 +69,11 @@ function ChartTooltip({ active, payload, label }) {
         boxShadow: "0 6px 18px rgba(0,0,0,0.45)",
       }}
     >
-      <div style={{ fontSize: 12, color: "#cbd5e1", marginBottom: 6 }}>
+      <div className="" style={{ fontSize: 12, color: "#cbd5e1", marginBottom: 6 }}>
         {toHourLabel(d.timeMs ?? d.time)}
       </div>
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 6 }}>
-        <div style={{ fontSize: 20 }}>{getIcon(d.code, d.isDay)}</div>
+        <div style={{ fontSize: 35 }}>{getIcon(d.code, d.isDay)}</div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 16 }}>{Math.round(d.temp ?? 0)}°</div>
           <div style={{ fontSize: 12, color: "#cbd5e1" }}>Feels like: {Math.round(d.feels ?? d.temp ?? 0)}°</div>
@@ -263,18 +266,20 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
     <section className="bg-white/5 backdrop-blur rounded-2xl p-4 mt-6 text-white">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Hourly</h3>
-        <div className="bg-white/10 rounded-full p-1 flex text-sm">
+        <div className="bg-white/10  rounded-full  flex text-sm">
           <button
             onClick={() => setViewMode("Chart")}
-            className={`px-3 py-1 rounded-full ${viewMode === "Chart" ? "bg-white/30" : "text-gray-200"}`}
+            className={`px-4 py-2 rounded-full flex gap-1 justify-center items-center  ${viewMode === "Chart" ? "bg-white/30" : "text-gray-200"}`}
           >
-            Chart
+            <RiLineChartLine className="text-[20px]"/>
+            <span className="sm:hidden md:block">Chart</span>   
           </button>
           <button
             onClick={() => setViewMode("List")}
-            className={`px-3 py-1 rounded-full ${viewMode === "List" ? "bg-white/30" : "text-gray-200"}`}
+            className={`px-4 py-2 rounded-full ${viewMode === "List" ? "bg-white/30" : "text-gray-200"}`}
           >
-            List
+            <CiCircleList className="text-[20px]"/> 
+            <span className="md:block sm:hidden">List</span>
           </button>
         </div>
       </div>
@@ -365,12 +370,12 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
               return (
                 <div
                   key={`hour-card-${h.key}`}
-                  className={`flex-shrink-0 space-y-3 w-28 h-full flex flex-col items-center justify-center text-center py-3 px-2 rounded-xl transition ${
+                  className={`flex-shrink-0 space-y-3 w-28 h-full flex flex-col items-start justify-center text-center py-3 px-2 rounded-xl transition ${
                     isCurrent ? "bg-white/30 ring-2 ring-white/20" : "bg-white/6"
                   }`}
                 >
-                  <div className="text-xs text-gray-200 mb-1">{h.label}</div>
-                  <div className="mb-1 text-xl">{getIcon(h.code, h.isDay)}</div>
+                  <div className="text-[15px] text-gray-100 mb-1">{h.label}</div>
+                  <div className="mb-1 text-2xl">{getIcon(h.code, h.isDay)}</div>
                   <div className="font-semibold">{h.temp != null ? Math.round(h.temp) : "—"}°</div>
                   <div className="text-xs text-gray-300">Feels {h.feels != null ? Math.round(h.feels) : "—"}°</div>
                   <div className="text-xs text-gray-300 mt-1">{h.precipDisplay ? `${h.precipDisplay}${h.precipIsProb ? "%" : " mm"}` : ""}</div>
