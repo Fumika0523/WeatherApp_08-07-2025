@@ -54,6 +54,7 @@ export default function HomePage() {
   }, [weatherData, selectedDay]);
 
 console.log("Daily forecast days:", weatherData?.daily?.time?.length);
+console.log("Full weatherData:", weatherData);
 
   return (
     <div className="relative min-h-screen">

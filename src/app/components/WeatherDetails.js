@@ -5,13 +5,12 @@ import {
   FaWind,
   FaTint,
   FaSun,
-  FaCloud,
-  FaEye,
   FaThermometerHalf,
   FaCloudShowersHeavy,
   FaSeedling,
   FaSmog,
   FaRegSmile,
+  FaMoon,
 } from "react-icons/fa";
 
 function fmt(v, unit = "") {
@@ -55,6 +54,30 @@ function beaufort(wKmh) {
   return { force: "—", label: "—" };
 }
 
+function getMoonPhaseName(phase) {
+  if (phase == null) return "—";
+  if (phase === 0 || phase === 1) return "New Moon";
+  if (phase < 0.25) return "Waxing Crescent";
+  if (phase === 0.25) return "First Quarter";
+  if (phase < 0.5) return "Waxing Gibbous";
+  if (phase === 0.5) return "Full Moon";
+  if (phase < 0.75) return "Waning Gibbous";
+  if (phase === 0.75) return "Last Quarter";
+  return "Waning Crescent";
+}
+
+function getMoonPhaseEmoji(phase) {
+  if (phase == null) return "—";
+  if (phase === 0 || phase === 1) return "🌑"; // New Moon
+  if (phase < 0.25) return "🌒"; // Waxing Crescent
+  if (phase === 0.25) return "🌓"; // First Quarter
+  if (phase < 0.5) return "🌔"; // Waxing Gibbous
+  if (phase === 0.5) return "🌕"; // Full Moon
+  if (phase < 0.75) return "🌖"; // Waning Gibbous
+  if (phase === 0.75) return "🌗"; // Last Quarter
+  return "🌘"; // Waning Crescent
+}
+
 export default function WeatherDetails({ weatherData }) {
   if (!weatherData) return null;
 
@@ -71,7 +94,6 @@ export default function WeatherDetails({ weatherData }) {
   const windKmh = current.windspeed ?? null;
   const windDirDeg = current.winddirection ?? current.winddir ?? null;
   const humidity = hourly?.relativehumidity_2m?.[0] ?? current.relativehumidity ?? null;
-  const cloudCover = hourly?.cloudcover?.[0] ?? daily?.cloudcover?.[0] ?? null;
   const precip24 = daily?.precipitation_sum?.[0] ?? null;
   const uvIndex = daily?.uv_index_max?.[0] ?? null;
   const pressure = current.pressure ?? daily?.surface_pressure_mean?.[0] ?? null;
@@ -88,6 +110,12 @@ export default function WeatherDetails({ weatherData }) {
     const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     dayLength = `${hrs}h ${mins}m`;
   }
+
+  // Robust Moon data
+  const moonrise = Array.isArray(daily?.moonrise) ? new Date(daily.moonrise[0]) : daily?.moonrise ? new Date(daily.moonrise) : null;
+  const moonset = Array.isArray(daily?.moonset) ? new Date(daily.moonset[0]) : daily?.moonset ? new Date(daily.moonset) : null;
+  const moonPhase = Array.isArray(daily?.moonphase) ? daily.moonphase[0] : daily?.moonphase ?? null;
+  const moonEmoji = getMoonPhaseEmoji(moonPhase);
 
   const windCompass = degToCompass(windDirDeg);
   const gustKmh = windGust ?? null;
@@ -111,11 +139,15 @@ export default function WeatherDetails({ weatherData }) {
       note: `Feels ${feelsLike != null && temp != null && feelsLike < temp ? "colder" : "similar"} than actual due to conditions.`
     },
     {
-      id: "cloud",
-      title: "Cloud cover",
-      value: fmt(cloudCover, "%"),
-      small: cloudCover != null ? "Mostly Clear" : "—",
-      note: "Tomorrow expected to see less cloud cover."
+      id: "moon",
+      title: "Moon",
+      value: moonPhase != null ? `${moonEmoji} ${getMoonPhaseName(moonPhase)}` : "—",
+      small: moonrise && moonset
+        ? `${moonrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} / ${moonset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+        : "—",
+      note: moonPhase != null
+        ? `Phase: ${Math.round(moonPhase * 100)}%`
+        : "—"
     },
     {
       id: "precip",
@@ -173,17 +205,7 @@ export default function WeatherDetails({ weatherData }) {
       small: "Grass",
       note: "Low. Tomorrow’s pollen count similar."
     },
-    {
-      id: "sun",
-      title: "Sunrise & Sunset",
-      value: sunrise && sunset
-        ? `${sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} / ${sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-        : "—",
-      small: `Day length: ${dayLength}`,
-      note: sunrise && sunset
-        ? `Sunrise at ${sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, Sunset at ${sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`
-        : "—"
-    }
+  
   ];
 
   return (
@@ -209,13 +231,13 @@ export default function WeatherDetails({ weatherData }) {
                 {c.id === "humidity" && <FaTint />}
                 {c.id === "dew" && <FaTint />}
                 {c.id === "uv" && <FaSun />}
-                {c.id === "cloud" && <FaCloud />}
                 {c.id === "precip" && <FaCloudShowersHeavy />}
                 {c.id === "aqi" && <FaSmog />}
                 {c.id === "pollen" && <FaSeedling />}
                 {c.id === "sun" && <FaSun />}
+                {c.id === "moon" && <FaMoon />}
                 {c.id === "temp" && <FaThermometerHalf />}
-                {!["wind","wind_gust","humidity","dew","uv","cloud","precip","aqi","pollen","sun","temp"].includes(c.id) && <FaRegSmile />}
+                {!["wind","wind_gust","humidity","dew","uv","precip","aqi","pollen","sun","moon","temp"].includes(c.id) && <FaRegSmile />}
               </div>
             </div>
 

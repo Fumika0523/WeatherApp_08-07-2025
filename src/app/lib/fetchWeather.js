@@ -1,8 +1,9 @@
-export async function fetchWeather(lat, lon) {
+export async function fetchWeather(lat, lon) { 
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
-    // 👇 Current weather values
+
+    // Current weather
     current: [
       "temperature_2m",
       "apparent_temperature",
@@ -12,7 +13,7 @@ export async function fetchWeather(lat, lon) {
       "surface_pressure"
     ].join(","),
 
-    // 👇 Hourly values
+    // Hourly values
     hourly: [
       "apparent_temperature",
       "relativehumidity_2m",
@@ -20,10 +21,18 @@ export async function fetchWeather(lat, lon) {
       "european_aqi"
     ].join(","),
 
-    // 👇 Daily values
-    daily: ["temperature_2m_max", "temperature_2m_min", "sunrise", "sunset"].join(","),
+    // Daily values (added Moon info)
+    daily: [
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "sunrise",
+      "sunset",
+      "moonrise",
+      "moonset",
+      "moonphase"
+    ].join(","),
 
-    air_quality: "true", // 👈 Enable Air Quality
+    air_quality: "true",
     timezone: "auto",
   });
 
