@@ -53,7 +53,7 @@ export default function HomePage() {
     });
   }, [weatherData, selectedDay]);
 
-console.log("Daily forecast days:", weatherData?.daily?.time?.length);
+// console.log("Daily forecast days:", weatherData?.daily?.time?.length);
 console.log("Full weatherData:", weatherData);
 
   return (
@@ -77,7 +77,7 @@ console.log("Full weatherData:", weatherData);
         {/* Weather sections */}
         {weatherData ? (
           <div className="w-full max-w-4xl space-y-6">
-            {/* Row: CurrentWeather + RadarMap */}
+            {/* Row: CurrentWeather  */}
           <div className="flex flex-col items-center justify-center lg:flex-row gap-4">
             <div className="w-full lg:w-auto">
               <CurrentWeather weatherData={weatherData} />

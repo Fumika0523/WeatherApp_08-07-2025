@@ -197,15 +197,7 @@ export default function WeatherDetails({ weatherData }) {
       value: fmt(aqi),
       small: aqi <= 50 ? "Good" : aqi <= 100 ? "Moderate" : "Unhealthy",
       note: "Primary pollutant: O₃ (placeholder)."
-    },
-    {
-      id: "pollen",
-      title: "Pollen",
-      value: fmt(pollen),
-      small: "Grass",
-      note: "Low. Tomorrow’s pollen count similar."
-    },
-  
+    },  
   ];
 
   return (

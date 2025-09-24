@@ -1,9 +1,7 @@
-export async function fetchWeather(lat, lon) { 
-  const params = new URLSearchParams({
+export async function fetchWeather(lat, lon) {
+  const weatherParams = new URLSearchParams({
     latitude: lat,
     longitude: lon,
-
-    // Current weather
     current: [
       "temperature_2m",
       "apparent_temperature",
@@ -12,16 +10,10 @@ export async function fetchWeather(lat, lon) {
       "visibility",
       "surface_pressure"
     ].join(","),
-
-    // Hourly values
     hourly: [
       "apparent_temperature",
-      "relativehumidity_2m",
-      "us_aqi",
-      "european_aqi"
+      "relativehumidity_2m"
     ].join(","),
-
-    // Daily values (added Moon info)
     daily: [
       "temperature_2m_max",
       "temperature_2m_min",
@@ -31,18 +23,44 @@ export async function fetchWeather(lat, lon) {
       "moonset",
       "moonphase"
     ].join(","),
-
-    air_quality: "true",
     timezone: "auto",
   });
 
-  const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
-  const res = await fetch(url);
+const airParams = new URLSearchParams({
+  latitude: lat,
+  longitude: lon,
+  hourly: [
+    "pm10",
+    "pm2_5",
+    "carbon_monoxide",
+    "nitrogen_dioxide",
+    "sulphur_dioxide",
+    "ozone",
+    "aerosol_optical_depth",
+    "dust",
+    "uv_index",
+    "uv_index_clear_sky"
+  ].join(","),
+  timezone: "auto",
+});
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch weather data");
+  const [weatherRes, airRes] = await Promise.all([
+    fetch(`https://api.open-meteo.com/v1/forecast?${weatherParams}`),
+    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${airParams}`)
+  ]);
+
+  if (!weatherRes.ok || !airRes.ok) {
+    throw new Error("Failed to fetch weather or air quality data");
   }
 
-  const data = await res.json();
-  return data;
+  const [weatherData, airData] = await Promise.all([
+    weatherRes.json(),
+    airRes.json()
+  ]);
+
+  // Merge air quality into weatherData for your component
+  return {
+    ...weatherData,
+    air_quality: airData.hourly,
+  };
 }

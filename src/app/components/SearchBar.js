@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FaSearch, FaRegStar } from "react-icons/fa";
+import { FaSearch, FaStar } from "react-icons/fa";
 import SunCalc from "suncalc"; // npm i suncalc
 
 export default function SearchBar({ setWeatherData, setLoading, setError, setCoords }) {
@@ -37,8 +37,7 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
     saveFavorites(updated);
   };
 
-  // Try fetching a forecast including extra hourly fields first (visibility, surface_pressure).
-  // If API returns 400, retry without the extras.
+  // Fetch forecast with fallback for extra fields
   async function fetchForecastWithFallback(latitude, longitude) {
     const baseParams = {
       latitude: String(latitude),
@@ -78,33 +77,20 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
       return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
     };
 
-    // 1) Try with extras
     const withExtras = `${safeHourly},${extraHourly}`;
     const url1 = buildUrl(withExtras);
-    console.log("Trying forecast URL (with extras):", url1);
 
     let res1 = await fetch(url1);
-    if (res1.ok) {
-      return await res1.json();
-    }
+    if (res1.ok) return await res1.json();
 
-    // If 400, retry without extras
     if (res1.status === 400) {
-      const body = await res1.text().catch(() => "<no body>");
-      console.warn("Forecast (with extras) failed 400; retrying without extras:", body);
       const url2 = buildUrl(safeHourly);
-      console.log("Retry forecast URL (safe):", url2);
       const res2 = await fetch(url2);
-      if (!res2.ok) {
-        const body2 = await res2.text().catch(() => "<no body>");
-        throw new Error(`Forecast retry failed ${res2.status}: ${body2}`);
-      }
+      if (!res2.ok) throw new Error(`Forecast retry failed ${res2.status}`);
       return await res2.json();
     }
 
-    // Other error -> throw
-    const bodyOther = await res1.text().catch(() => "<no body>");
-    throw new Error(`Forecast fetch failed ${res1.status}: ${bodyOther}`);
+    throw new Error(`Forecast fetch failed ${res1.status}`);
   }
 
   const getWeather = async (cityName) => {
@@ -119,11 +105,10 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
       const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
         cityName
       )}&count=1`;
-      console.log("Geocode URL:", geoUrl);
       const geoRes = await fetch(geoUrl);
       const geoData = await geoRes.json();
 
-      if (!geoData?.results || geoData.results.length === 0) {
+      if (!geoData?.results?.length) {
         setError("City not found");
         setLoading(false);
         return;
@@ -132,76 +117,67 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
       const { latitude, longitude, name, country } = geoData.results[0];
       if (typeof setCoords === "function") setCoords({ latitude, longitude });
 
-      // 2) Forecast (with fallback for risky hourly fields)
+      // 2) Forecast
       const forecastData = await fetchForecastWithFallback(latitude, longitude);
-      console.log("Forecast response:", forecastData);
-      console.log("Forecast daily keys:", Object.keys(forecastData.daily || {}));
-      console.log("Forecast hourly keys:", Object.keys(forecastData.hourly || {}));
 
-      // 3) Air quality (separate endpoint) - optional, safe
+      // 3) Air quality (fixed)
       let airQualityHourly = null;
       try {
+        const aqHourlyVars = [
+          "us_aqi",
+          "european_aqi",
+          "pm10",
+          "pm2_5",
+          "carbon_monoxide",
+          "nitrogen_dioxide",
+          "sulphur_dioxide",
+          "ozone",
+        ].join(",");
+
         const aqParams = new URLSearchParams({
           latitude: String(latitude),
           longitude: String(longitude),
           timezone: "auto",
-          hourly: "us_aqi,european_aqi",
+          hourly: aqHourlyVars,
         });
-        const aqUrl = `https://api.open-meteo.com/v1/air-quality?${aqParams.toString()}`;
-        console.log("Fetching air-quality URL:", aqUrl);
+
+        const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?${aqParams.toString()}`;
         const aqRes = await fetch(aqUrl);
         if (aqRes.ok) {
           const aqData = await aqRes.json();
-          console.log("Air quality response:", aqData);
           airQualityHourly = aqData.hourly || null;
         } else {
-          console.warn("Air quality fetch returned", aqRes.status);
+          console.warn("Air quality fetch failed", aqRes.status);
         }
       } catch (err) {
-        console.warn("Air quality fetch error (continuing):", err);
+        console.warn("Air quality fetch error:", err);
       }
 
-      // 4) Build daily object and compute moon data locally using suncalc
+      // 4) Compute moon data
       const dailyRaw = forecastData.daily || {};
       const daily = { ...dailyRaw };
-
-      // Compute moonrise/moonset/phase aligned with daily.time
       try {
         const timeArr = Array.isArray(dailyRaw.time) ? dailyRaw.time : [];
         const moonriseArr = [];
         const moonsetArr = [];
         const moonphaseArr = [];
-
         for (let i = 0; i < timeArr.length; i++) {
-          const dateStr = timeArr[i];
-          const dt = new Date(dateStr); // daily.time likely "YYYY-MM-DD"
-
+          const dt = new Date(timeArr[i]);
           const mt = SunCalc.getMoonTimes(dt, latitude, longitude);
           moonriseArr.push(mt.rise ? mt.rise.toISOString() : null);
           moonsetArr.push(mt.set ? mt.set.toISOString() : null);
-
-          const illum = SunCalc.getMoonIllumination(dt);
-          moonphaseArr.push(illum.phase);
+          moonphaseArr.push(SunCalc.getMoonIllumination(dt).phase);
         }
-
         daily.moonrise = moonriseArr;
         daily.moonset = moonsetArr;
         daily.moonphase = moonphaseArr;
-
-        console.log("Computed moon arrays (sample):", {
-          moonrise: moonriseArr.slice(0, 3),
-          moonset: moonsetArr.slice(0, 3),
-          moonphase: moonphaseArr.slice(0, 3),
-        });
-      } catch (err) {
-        console.warn("Failed to compute moon data:", err);
-        // fallbacks
+      } catch {
         daily.moonrise = dailyRaw.moonrise || ["20:10"];
         daily.moonset = dailyRaw.moonset || ["06:45"];
         daily.moonphase = dailyRaw.moonphase || [0.5];
       }
 
-      // 5) Normalize 'current' object for WeatherDetails
+      // 5) Normalize current
       const current = {
         temperature: forecastData.current_weather?.temperature ?? null,
         time: forecastData.current_weather?.time ?? null,
@@ -220,20 +196,19 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
         pressure: forecastData.hourly?.surface_pressure?.[0] ?? null,
       };
 
-      // 6) Merge AQ hourly into forecastData.hourly if available
+      // 6) Merge AQ hourly into hourly
       const mergedHourly = { ...(forecastData.hourly || {}) };
       if (airQualityHourly) {
         if (Array.isArray(airQualityHourly.us_aqi)) mergedHourly.us_aqi = airQualityHourly.us_aqi;
         if (Array.isArray(airQualityHourly.european_aqi)) mergedHourly.european_aqi = airQualityHourly.european_aqi;
       }
 
-      // 7) Top-level aqi fallback
       const topAqi =
         airQualityHourly?.us_aqi?.[0] ??
         airQualityHourly?.european_aqi?.[0] ??
         null;
 
-      // 8) Final setWeatherData
+      // 7) Set final weatherData
       setWeatherData({
         city: name,
         country,
@@ -241,6 +216,7 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
         hourly: mergedHourly,
         daily,
         aqi: topAqi,
+        air_quality: airQualityHourly ?? {},
         raw: { forecastData, airQualityHourly },
       });
 
@@ -282,7 +258,7 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
               className="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full cursor-pointer hover:bg-white/20 transition"
             >
               <span onClick={() => getWeather(fav)}>{fav}</span>
-              <FaRegStar
+              <FaStar 
                 className="text-yellow-400 hover:text-red-400"
                 onClick={() => removeFavorite(fav)}
               />
