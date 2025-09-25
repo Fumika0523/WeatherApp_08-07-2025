@@ -370,15 +370,15 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
               return (
                 <div
                   key={`hour-card-${h.key}`}
-                  className={`flex-shrink-0 space-y-3 w-28 h-full flex flex-col items-start justify-center text-center py-3 px-2 rounded-xl transition ${
+                  className={`flex-shrink-0 space-y-1 w-28 h-full flex flex-col items-start justify-center text-center py-3 px-2 rounded-xl transition ${
                     isCurrent ? "bg-white/30 ring-2 ring-white/20" : "bg-white/6"
                   }`}
                 >
-                  <div className="text-[15px] text-gray-100 mb-1">{h.label}</div>
-                  <div className="mb-1 text-2xl">{getIcon(h.code, h.isDay)}</div>
-                  <div className="font-semibold">{h.temp != null ? Math.round(h.temp) : "—"}°</div>
-                  <div className="text-xs text-gray-300">Feels {h.feels != null ? Math.round(h.feels) : "—"}°</div>
-                  <div className="text-xs text-gray-300 mt-1">{h.precipDisplay ? `${h.precipDisplay}${h.precipIsProb ? "%" : " mm"}` : ""}</div>
+                  <div className="text-[17px] text-gray-100 mb-1">{h.label}</div>
+                  <div className="mb-1 text-5xl">{getIcon(h.code, h.isDay)}</div>
+                  <div className="font-semibold text-[17px]">{h.temp != null ? Math.round(h.temp) : "—"}°</div>
+                  <div className="text-sm text-gray-200">Feels like {h.feels != null ? Math.round(h.feels) : "—"}°</div>
+                  <div className="text-xs text-gray-300">{h.precipDisplay ? `${h.precipDisplay}${h.precipIsProb ? "%" : " mm"}` : ""}</div>
                 </div>
               );
             })}
