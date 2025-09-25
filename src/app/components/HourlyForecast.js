@@ -276,7 +276,7 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
           </button>
           <button
             onClick={() => setViewMode("List")}
-            className={`px-4 py-2 rounded-full ${viewMode === "List" ? "bg-white/30" : "text-gray-200"}`}
+            className={`px-4 py-2 rounded-full flex gap-1 justify-center items-center  ${viewMode === "List" ? "bg-white/30" : "text-gray-200"}`}
           >
             <CiCircleList className="text-[20px]"/> 
             <span className="md:block sm:hidden">List</span>

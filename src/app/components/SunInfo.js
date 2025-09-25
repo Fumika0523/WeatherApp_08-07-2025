@@ -29,8 +29,8 @@ export default function SunInfo({ daily }) {
   }, [sunriseMs, sunsetMs]);
 
   // --- viewBox geometry ---
-  const vbWidth = 1000;
-  const vbHeight = 560;
+  const vbWidth = 800;
+  const vbHeight = 350;
 
   const marginX = 80;
   const leftX = marginX;
@@ -99,17 +99,17 @@ export default function SunInfo({ daily }) {
     "transform 0.8s cubic-bezier(.22,1,.36,1), stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1), x2 0.8s cubic-bezier(.22,1,.36,1)";
 
   return (
-    <div className="rounded-2xl p-5 text-white bg-white/5">
+    <div className="rounded-2xl p-5  text-white bg-white/5">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="text-xl font-semibold text-gray-100">Sun</div>
       </div>
 
-      <div ref={wrapRef} className="w-full mt-4">
+      <div ref={wrapRef} className="w-full ">
         <svg
           viewBox={`0 0 ${vbWidth} ${vbHeight}`}
           preserveAspectRatio="xMidYMid meet"
-          className="w-full h-36 sm:h-40 md:h-44"
+          className="w-full h-36 sm:h-40 md:h-30 "
           style={{ overflow: "visible" }}
         >
           <defs>
@@ -136,7 +136,7 @@ export default function SunInfo({ daily }) {
 
           {/* Progress arc */}
           <path
-            d={`M ${leftX} ${cy} A ${radius} ${radius} 0 0 1 ${rightX} ${cy}`}
+          d={`M ${leftX} ${cy} A ${radius} ${radius} 0 0 1 ${rightX} ${cy}`}
             fill="none"
             stroke="url(#msnSunGradient)"
             strokeWidth={arcStroke}
@@ -180,26 +180,26 @@ export default function SunInfo({ daily }) {
       </div>
 
       {/* Day length */}
-      <div className="mt-2 text-center text-sm font-semibold text-gray-100">
+      <div className=" text-center mt-1 text-[18px] font-semibold text-gray-100">
         {durationHrs} hrs {durationMins} mins
       </div>
 
       {/* Sunrise / Sunset */}
-      <div className="mt-4 flex justify-between text-center">
+      <div className="mt-2 flex justify-between">
         <div>
           <div className="text-2xl font-bold">
             {new Date(sunriseMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
-          <div className="text-sm text-gray-400 flex items-center justify-center">
-            <Sunrise size={16} className="mr-1" /> Sunrise
+          <div className="text-sm text-gray-200 flex items-center justify-center">
+            <Sunrise size={18} className="mr-1" /> Sunrise
           </div>
         </div>
         <div>
           <div className="text-2xl font-bold">
             {new Date(sunsetMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
-          <div className="text-sm text-gray-400 flex items-center justify-center">
-            Sunset <Sunset size={16} className="ml-1" />
+          <div className="text-sm text-gray-200 flex items-center justify-center">
+             <Sunset size={18} className="mr-1" />Sunset
           </div>
         </div>
       </div>
