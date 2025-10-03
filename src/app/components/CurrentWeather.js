@@ -8,10 +8,9 @@ import {
   FaTachometerAlt,
   FaSmog,
   FaCloud,
-  FaCloudRain,
   FaSnowflake,
 } from "react-icons/fa";
-import { IoIosSunny } from "react-icons/io";
+import { IoIosSunny, IoIosRainy  } from "react-icons/io";
 
 export default function CurrentWeather({ weatherData }) {
   if (!weatherData) return null;
@@ -66,7 +65,7 @@ export default function CurrentWeather({ weatherData }) {
     if (code === 0) return <IoIosSunny className="text-yellow-500" size={90} />;
     if ([1, 2, 3].includes(code)) return <FaCloud size={90} />;
     if ([45, 48].includes(code)) return <FaCloud size={90} />;
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return <FaCloudRain size={90} />;
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return <IoIosRainy size={90} />;
     if ([71, 73, 75, 77, 85, 86].includes(code)) return <FaSnowflake size={90} />;
     return <FaCloud size={90} />;
   };
