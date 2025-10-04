@@ -2,11 +2,6 @@
 "use client";
 
 import {
-  FaWind,
-  FaTint,
-  FaEye,
-  FaTachometerAlt,
-  FaSmog,
   FaCloud,
   FaSnowflake,
 } from "react-icons/fa";

@@ -13,6 +13,9 @@ import {
   FaMoon,
 } from "react-icons/fa";
 
+import {  WiMoonNew, WiMoonWaxingCrescent2 ,WiMoonWaxingGibbous3, WiMoonFirstQuarter, WiMoonFull, WiMoonWaningGibbous2, WiMoonThirdQuarter, WiMoonWaningCrescent5  } from "react-icons/wi";
+
+
 function fmt(v, unit = "") {
   if (v === null || v === undefined || Number.isNaN(v)) return "—";
   return `${v}${unit}`;
@@ -68,14 +71,14 @@ function getMoonPhaseName(phase) {
 
 function getMoonPhaseEmoji(phase) {
   if (phase == null) return "—";
-  if (phase === 0 || phase === 1) return "🌑"; // New Moon
-  if (phase < 0.25) return "🌒"; // Waxing Crescent
-  if (phase === 0.25) return "🌓"; // First Quarter
-  if (phase < 0.5) return "🌔"; // Waxing Gibbous
-  if (phase === 0.5) return "🌕"; // Full Moon
-  if (phase < 0.75) return "🌖"; // Waning Gibbous
-  if (phase === 0.75) return "🌗"; // Last Quarter
-  return "🌘"; // Waning Crescent
+  if (phase === 0 || phase === 1) return <WiMoonNew className="text-yellow-300 text-7xl" />; // New Moon
+  if (phase < 0.25) return <WiMoonWaxingCrescent2 className="text-yellow-300 text-7xl" />; // Waxing Crescent
+  if (phase === 0.25) return <WiMoonFirstQuarter className="text-yellow-300 text-7xl" />; // First Quarter
+  if (phase < 0.5) return <WiMoonWaxingGibbous3 className="text-yellow-300 text-7xl" />; // Waxing Gibbous
+  if (phase === 0.5) return <WiMoonFull className="text-yellow-300 text-7xl" />; // Full Moon
+  if (phase < 0.75) return <WiMoonWaningGibbous2 className="text-yellow-300 text-7xl" />; // Waning Gibbous
+  if (phase === 0.75) return <WiMoonThirdQuarter className="text-yellow-300 text-7xl"  />; // Last Quarter
+  return <WiMoonWaningCrescent5 className="text-yellow-300 text-7xl" />; // Waning Crescent
 }
 
 export default function WeatherDetails({ weatherData }) {
@@ -141,14 +144,19 @@ export default function WeatherDetails({ weatherData }) {
     {
       id: "moon",
       title: "Moon",
-      value: moonPhase != null ? `${moonEmoji} ${getMoonPhaseName(moonPhase)}` : "—",
+      value: moonPhase != null ? (
+        <span className="flex items-center gap-2">
+          <span >{moonEmoji}</span>
+          <span>{Math.round(moonPhase * 100)}%</span>
+        </span>
+      ) : "—",
       small: moonrise && moonset
         ? `${moonrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} / ${moonset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
         : "—",
-      note: moonPhase != null
-        ? `Phase: ${Math.round(moonPhase * 100)}%`
-        : "—"
+      note: "", // optional
     },
+
+
     {
       id: "precip",
       title: "Precipitation (24h)",
@@ -162,13 +170,6 @@ export default function WeatherDetails({ weatherData }) {
       value: windCompass !== "—" ? `${windCompass} (${windDirDeg}°)` : "—",
       small: windKmh != null ? fmt(windKmh, " km/h") : "—",
       note: `Direction: ${windCompass} ${windDirDeg ? `(${Math.round(windDirDeg)}°)` : ""}`
-    },
-    {
-      id: "wind_gust",
-      title: "Wind gust / Force",
-      value: fmt(gustKmh ?? windKmh, " km/h"),
-      small: `Force: ${beaufortInfo.force}`,
-      note: `Average ${fmt(windKmh, " km/h")} with gusts to ${fmt(gustKmh, " km/h")}.`
     },
     {
       id: "humidity",
@@ -234,7 +235,7 @@ export default function WeatherDetails({ weatherData }) {
             </div>
 
             <div className="mt-3">
-              <div className="text-2xl font-bold">{c.value}</div>
+              <div className="text-4xl font-bold">{c.value}</div>
               <div className="text-sm text-gray-200 mt-1">{c.small}</div>
               {c.note && <p className="text-xs text-gray-300 mt-2">{c.note}</p>}
             </div>
