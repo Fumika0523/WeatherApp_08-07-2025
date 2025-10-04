@@ -2,10 +2,10 @@
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { IoIosSunny, IoIosRainy } from "react-icons/io";
-import { FaCloud, FaSnowflake,  } from "react-icons/fa";
+import { FaCloud, FaSnowflake } from "react-icons/fa";
 import { RiLineChartLine } from "react-icons/ri";
 import { CiCircleList } from "react-icons/ci";
-import { IoMdArrowDropright , IoMdArrowDropleft } from "react-icons/io";
+import { IoMdArrowDropright, IoMdArrowDropleft } from "react-icons/io";
 
 import {
   Chart as ChartJS,
@@ -25,13 +25,23 @@ ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, TimeScal
 
 /* ---------------------- Helpers ---------------------- */
 const toHourLabel = (t) => {
-  if (typeof window === "undefined") return t; // avoid hydration mismatch
-  try {
-    return new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return t;
+  if (!t) return "";
+  let d;
+
+  if (t instanceof Date) {
+    d = t;
+  } else if (typeof t === "number") {
+    d = new Date(t);
+  } else if (typeof t === "string") {
+    d = new Date(t);
+  } else {
+    return "";
   }
+
+  if (isNaN(d)) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
+
 
 const closestIndex = (times, now = new Date()) => {
   if (!times?.length) return 0;
@@ -47,6 +57,28 @@ const getIcon = (code, isDay) => {
   if ([51, 61, 80].includes(code)) return <IoIosRainy />;
   if ([71, 73, 75, 77, 85, 86].includes(code)) return <FaSnowflake />;
   return <FaCloud />;
+};
+
+const CustomTooltip = (ctx, hourly) => {
+  const idx = ctx.tooltip?.dataPoints?.[0]?.dataIndex;
+  if (idx == null) return null;
+  const d = hourly[idx];
+
+  return `<div style="min-width:150px;background:rgba(6,8,20,0.9);padding:12px;border-radius:10px;color:white;box-shadow:0 6px 18px rgba(0,0,0,0.45)">
+      <div style="font-size:12px;color:#cbd5e1;margin-bottom:6px">${toHourLabel(d.timeMs)}</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">
+        <div style="font-size:35px">${getIcon(d.code, d.isDay).props.children ?? ""}</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">${Math.round(d.temp ?? 0)}°</div>
+          <div style="font-size:12px;color:#cbd5e1">Feels like: ${Math.round(d.feels ?? d.temp ?? 0)}°</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#cbd5e1">
+        <div>Precip: ${d.precipDisplay ?? 0}${d.precipIsProb ? "%" : " mm"}</div>
+        <div>Wind: ${d.wind ?? "—"} km/h</div>
+        <div>Humidity: ${d.humidity ?? "—"}%</div>
+      </div>
+    </div>`;
 };
 
 /* ---------------------- Main Component ---------------------- */
@@ -96,37 +128,27 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
     });
   }, [hRaw, daily]);
 
-  // filter hourly: ONLY include hours that belong to the selected date (or today if none selected)
   const filteredHourly = useMemo(() => {
     if (!hourly.length) return [];
-
     const isSameDate = (timeStr, dateObj) => {
       const d = new Date(timeStr);
       return d.getFullYear() === dateObj.getFullYear() &&
              d.getMonth() === dateObj.getMonth() &&
              d.getDate() === dateObj.getDate();
     };
-
-    // if no selectedDay, treat as "today" and show only today's hours (00:00 - 23:00)
     if (!selectedDay) {
       const today = new Date();
       return hourly.filter(h => isSameDate(h.time, today));
     }
-
-    // numeric day like "10"
     if (/^\d{1,2}$/.test(selectedDay)) {
       const dayNum = Number(selectedDay);
-      // keep items that have same day-of-month (month/year will match the data)
       return hourly.filter(h => new Date(h.time).getDate() === dayNum);
     }
-
-    // full date string
     const sel = new Date(selectedDay);
     if (isNaN(sel)) return hourly;
     return hourly.filter(h => isSameDate(h.time, sel));
   }, [hourly, selectedDay]);
 
-  // is selected day equal to today (or none selected)
   const isSelectedToday = useMemo(() => {
     if (!filteredHourly.length) return false;
     if (!selectedDay) return true;
@@ -137,7 +159,6 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
     return !isNaN(sel) && sel.toDateString() === new Date().toDateString();
   }, [selectedDay, filteredHourly]);
 
-  // exact Now index only when an exact same hour exists in filteredHourly
   const exactNowIndex = useMemo(() => {
     if (!filteredHourly.length) return -1;
     const now = new Date();
@@ -153,8 +174,10 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
   }, [filteredHourly]);
 
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [firstIdx, setFirstIdx] = useState(0);
+  const [showNowLabel, setShowNowLabel] = useState(true);
 
-  // set currentIdx when data changes: use exact Now if present & today, otherwise start at 0
+  // initial currentIdx
   useEffect(() => {
     if (!filteredHourly.length) return;
     if (isSelectedToday && exactNowIndex >= 0) {
@@ -164,173 +187,165 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
     }
   }, [filteredHourly, isSelectedToday, exactNowIndex]);
 
-  // helper to scroll to a specific index (uses offsetLeft)
-const scrollToIndex = (index, smooth = true) => {
-  if (!scrollRef.current) return;
-  const container = scrollRef.current;
-  const children = container.children;
-  if (!children || index < 0 || index >= children.length) return;
-  const card = children[index];
-  const left = card.offsetLeft;
-  try {
-    container.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
-  } catch {
-    container.scrollLeft = left;
-  }
-};
-
-// improved scrollBy with left-wrap-to-NOW behavior
-const scrollBy = (direction) => {
-  if (!scrollRef.current) return;
-  const container = scrollRef.current;
-  const cardWidth = 128; // tweak if your card width/gap changes
-  const maxScrollLeft = Math.max(0, container.scrollWidth - container.offsetWidth);
-  const atStart = container.scrollLeft <= 2;
-  const atEnd = container.scrollLeft >= maxScrollLeft - 2;
-
-  // RIGHT arrow: if at end -> wrap to Now (if available) or to start
-  if (direction > 0 && atEnd) {
-    if (isSelectedToday && exactNowIndex >= 0) {
-      setCurrentIdx(exactNowIndex); // highlight Now
-      scrollToIndex(exactNowIndex);
-    } else {
-      // no Now available, jump to start
-      try {
-        container.scrollTo({ left: 0, behavior: "smooth" });
-      } catch {
-        container.scrollLeft = 0;
-      }
-      setCurrentIdx(0);
+  const scrollToIndex = (index, smooth = true) => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const card = container.children[index];
+    if (!card) return;
+    const left = card.offsetLeft;
+    try {
+      container.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+    } catch {
+      container.scrollLeft = left;
     }
-    return;
-  }
-
-  // LEFT arrow: if at start -> go to Now (if available)
-  if (direction < 0 && atStart) {
-    if (isSelectedToday && exactNowIndex >= 0) {
-      setCurrentIdx(exactNowIndex);
-      scrollToIndex(exactNowIndex);
-    } else {
-      // optional: wrap to end if you prefer; here we just stay at start
-      // to wrap to end uncomment below:
-      // try { container.scrollTo({ left: maxScrollLeft, behavior: "smooth" }); } catch { container.scrollLeft = maxScrollLeft; }
-      setCurrentIdx(0);
-    }
-    return;
-  }
-
-  // Normal card-by-card scroll
-  try {
-    container.scrollBy({ left: direction * cardWidth, behavior: "smooth" });
-  } catch {
-    container.scrollLeft = Math.max(0, Math.min(maxScrollLeft, container.scrollLeft + direction * cardWidth));
-  }
-};
-
-
-  const accent = "#facc15";
-  const limited = filteredHourly.slice(0, 24);
-
-  const data = {
-    labels: limited.map(h => h.timeMs),
-    datasets: [
-      {
-        label: "Temp",
-        data: filteredHourly.map(h => h.temp),
-        fill: true,
-        borderColor: accent,
-        backgroundColor: "rgba(250, 204, 21, 0.2)",
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: accent,
-      },
-      {
-        label: "Feels like",
-        data: filteredHourly.map(h => h.feels),
-        borderColor: "#f97316",
-        borderDash: [4, 6],
-        tension: 0.4,
-        fill: false,
-        pointRadius: 0,
-      },
-    ],
   };
 
+  const scrollBy = (direction) => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const cardWidth = 128;
+    const maxScrollLeft = Math.max(0, container.scrollWidth - container.offsetWidth);
+    const atStart = container.scrollLeft <= 2;
+    const atEnd = container.scrollLeft >= maxScrollLeft - 2;
+
+    if (direction > 0 && atEnd) {
+      if (isSelectedToday && exactNowIndex >= 0) {
+        setCurrentIdx(exactNowIndex);
+        scrollToIndex(exactNowIndex);
+      } else {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+        setCurrentIdx(0);
+      }
+      return;
+    }
+    if (direction < 0 && atStart) {
+      if (isSelectedToday && exactNowIndex >= 0) {
+        setCurrentIdx(exactNowIndex);
+        scrollToIndex(exactNowIndex);
+      } else {
+        setCurrentIdx(0);
+      }
+      return;
+    }
+    try {
+      container.scrollBy({ left: direction * cardWidth, behavior: "smooth" });
+    } catch {
+      container.scrollLeft = Math.max(0, Math.min(maxScrollLeft, container.scrollLeft + direction * cardWidth));
+    }
+  };
+
+  const accent = "#facc15";
+const limitedHourly = filteredHourly.slice(0, 24);
+
+const data = {
+  labels: limitedHourly.map(h => h.timeMs), // timestamps in ms
+  datasets: [
+    {
+      label: "Temp",
+      data: limitedHourly.map(h => h.temp),
+      fill: true,
+      borderColor: accent,
+      backgroundColor: "rgba(250, 204, 21, 0.2)",
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      pointHoverBackgroundColor: accent,
+    },
+    {
+      label: "Feels like",
+      data: limitedHourly.map(h => h.feels),
+      borderColor: "#f97316",
+      borderDash: [4, 6],
+      tension: 0.4,
+      fill: false,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+    },
+  ],
+};
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
-    },
-    scales: {
-      x: {
-        type: "time",
-        ticks: {
-          color: "white",
-          font: { size: 11 },
-          callback: function (val, idx) {
-            const showNow = isSelectedToday && exactNowIndex >= 0 && idx === currentIdx;
-            return showNow ? "Now" : toHourLabel(this.getLabelForValue(val));
-          },
+      tooltip: {
+        enabled: false,
+        external: (ctx) => {
+          const tooltipEl = document.getElementById("chartjs-tooltip");
+          if (!tooltipEl) return;
+          const { chart, tooltip } = ctx;
+          if (tooltip.opacity === 0) {
+            tooltipEl.style.opacity = 0;
+            return;
+          }
+          tooltipEl.style.opacity = 1;
+          tooltipEl.style.position = "absolute";
+          tooltipEl.style.left = chart.canvas.offsetLeft + tooltip.caretX + "px";
+          tooltipEl.style.top = chart.canvas.offsetTop + tooltip.caretY + "px";
+          tooltipEl.innerHTML = CustomTooltip(ctx, filteredHourly);
         },
       },
-      y: { ticks: { color: "white", font: { size: 11 } } },
     },
+   scales: {
+x: {
+  type: "time",
+  time: {
+    unit: "hour",
+    tooltipFormat: "HH:mm",
+    displayFormats: { hour: "HH:mm" },
+  },
+  ticks: {
+    color: "white",
+    font: { size: 11 },
+    callback: function (val, idx, ticks) {
+      const d = new Date(val);
+      if (isNaN(d)) return "";
+      // Show "Now" at current index
+      if (idx === currentIdx && showNowLabel) return "Now";
+      // Only show label every 3 hours
+      const hour = d.getHours();
+      if (hour % 2 === 0) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return ""; // skip other hours
+    },
+  },
+},
+
+  y: { ticks: { color: "white", font: { size: 11 } } },
+},
+
   };
 
-  // Scroll-to-"Now" when switching to List view (only if exactNowIndex exists and selected day is today).
+  // scroll to Now when switching to List view
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!scrollRef.current || !filteredHourly.length) return;
-
-    // only act when user switched to List
     if (viewMode !== "List") return;
 
-    if (!(isSelectedToday && exactNowIndex >= 0)) {
-      // ensure scrolled to start for non-today or if no exact Now
-      scrollRef.current.scrollLeft = 0;
-      return;
+    let idx = 0;
+    if (isSelectedToday && exactNowIndex >= 0) {
+      idx = exactNowIndex;
+      setCurrentIdx(exactNowIndex);
     }
 
-    // perform reliable scroll after DOM paint (two rAFs) and fallback
-    let raf1 = null;
-    let raf2 = null;
-    let fallbackTimer = null;
-
-    const scrollToNow = () => {
+    const scrollNow = () => {
       if (!scrollRef.current) return;
-      const children = scrollRef.current.children;
-      if (!children || children.length === 0 || currentIdx >= children.length) return;
-      const card = children[currentIdx];
+      const card = scrollRef.current.children[idx];
       if (!card) return;
       const left = card.offsetLeft;
-
       try {
         scrollRef.current.scrollTo({ left, behavior: "smooth" });
       } catch {
         scrollRef.current.scrollLeft = left;
       }
-
-      fallbackTimer = setTimeout(() => {
-        if (!scrollRef.current) return;
-        if (Math.abs(scrollRef.current.scrollLeft - left) > 2) {
-          scrollRef.current.scrollLeft = left;
-        }
-      }, 250);
     };
 
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(scrollToNow);
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(scrollNow);
     });
 
-    return () => {
-      if (raf1) cancelAnimationFrame(raf1);
-      if (raf2) cancelAnimationFrame(raf2);
-      if (fallbackTimer) clearTimeout(fallbackTimer);
-    };
-  }, [viewMode, currentIdx, filteredHourly, isSelectedToday, exactNowIndex]);
+    return () => cancelAnimationFrame(raf1);
+  }, [viewMode, filteredHourly, isSelectedToday, exactNowIndex]);
+
 
   return (
     <section className="bg-white/5 backdrop-blur rounded-2xl p-4 mt-6 text-white">
@@ -361,39 +376,34 @@ const scrollBy = (direction) => {
       {filteredHourly.length > 0 && viewMode === "Chart" && (
         <div className="w-full h-64 mb-4 relative">
           <Line data={data} options={options} />
+          <div id="chartjs-tooltip" className="absolute top-0 left-0 pointer-events-none"></div>
         </div>
       )}
 
       {filteredHourly.length > 0 && viewMode === "List" && (
         <div className="relative">
-         {/* Left arrow */}
-        <button
-          aria-label="Previous hours"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm
-          transform transition-transform duration-200 ease-out
-          hover:scale-120 active:scale-115 focus:outline-none focus:ring-2 focus:ring-white/30
-          flex items-center justify-center"
-          onClick={() => scrollBy(-4)}
-        >
-          <IoMdArrowDropleft className="text-2xl" />
-        </button>
-
-          <div
-            ref={scrollRef}
-            className="flex gap-5 overflow-x-hidden scroll-smooth py-2"
+          <button
+            aria-label="Previous hours"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm
+              transform transition-transform duration-200 ease-out
+              hover:scale-120 active:scale-115 focus:outline-none focus:ring-2 focus:ring-white/30
+              flex items-center justify-center"
+            onClick={() => scrollBy(-4)}
           >
+            <IoMdArrowDropleft className="text-2xl" />
+          </button>
+
+          <div ref={scrollRef} className="flex gap-5 overflow-x-hidden scroll-smooth py-2">
             {filteredHourly.map((h, i) => {
               const showNow = isSelectedToday && exactNowIndex >= 0 && i === currentIdx;
               return (
                 <div
                   key={h.key}
                   className={`flex-shrink-0 space-y-3 w-32 flex flex-col min-h-[170px] items-start justify-start py-3 px-2 rounded-xl transition ${
-                    showNow ? "bg-white/30 ring-2 ring-white/20" : "bg-white/6"
+                    showNow ? "bg-white/30 ring-2 ring-white/20" : "bg-white/6 hover:bg-white/10"
                   }`}
                 >
-                  <div className="text-[17px] text-gray-100">
-                    {showNow ? "Now" : h.label}
-                  </div>
+                  <div className="text-[17px] text-gray-100">{showNow ? "Now" : h.label}</div>
                   <div className="text-6xl">{getIcon(h.code, h.isDay)}</div>
                   <div className="font-semibold text-[17px]">{h.temp != null ? Math.round(h.temp) : "—"}°</div>
                   <div className="text-sm text-gray-200">
@@ -403,17 +413,17 @@ const scrollBy = (direction) => {
               );
             })}
           </div>
-         <button
-          aria-label="Next hours"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm
-          transform transition-transform duration-200 ease-out
-          hover:scale-120 active:scale-115 focus:outline-none focus:ring-2 focus:ring-white/30
-          flex items-center justify-center"
-          onClick={() => scrollBy(4)}
-        >
-          <IoMdArrowDropright className="text-2xl" />
-        </button>
 
+          <button
+            aria-label="Next hours"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm
+              transform transition-transform duration-200 ease-out
+              hover:scale-120 active:scale-115 focus:outline-none focus:ring-2 focus:ring-white/30
+              flex items-center justify-center"
+            onClick={() => scrollBy(4)}
+          >
+            <IoMdArrowDropright className="text-2xl" />
+          </button>
         </div>
       )}
     </section>
