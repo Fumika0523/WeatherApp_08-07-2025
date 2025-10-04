@@ -49,7 +49,7 @@ export default function DailyForecast({ daily, selectedDay, setSelectedDay }) {
       <button
         aria-label="Previous days"
         className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/10 p-2 rounded-full"
-        onClick={() => scrollBy(-1)}
+        onClick={() => scrollBy(-7)}
       >
         <FaChevronLeft />
       </button>
@@ -85,7 +85,7 @@ export default function DailyForecast({ daily, selectedDay, setSelectedDay }) {
 
               <div className="flex flex-row gap-4 items-center justify-center ">
                 {/* Icon */}
-                  <div className="text-4xl">{getWeatherIcon(code, isDay)}</div>
+                  <div className="text-5xl">{getWeatherIcon(code, isDay)}</div>
 
                 {/* Temperature */}
                 <div className="flex flex-col text-white items-center">
@@ -103,7 +103,7 @@ export default function DailyForecast({ daily, selectedDay, setSelectedDay }) {
       <button
         aria-label="Next days"
         className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/10 p-2 rounded-full"
-        onClick={() => scrollBy(1)}
+        onClick={() => scrollBy(7)}
       >
         <FaChevronRight />
       </button>

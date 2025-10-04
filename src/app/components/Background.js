@@ -21,7 +21,7 @@ export default function Background({ weatherData }) {
       setBgClass("bg-gradient-to-br from-gray-400 to-gray-700");
     } else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) {
       // Rain
-      setBgClass("bg-gradient-to-br from-blue-400 to-statle-600");
+      setBgClass("bg-gradient-to-br from-blue-400 to-statle-700");
     } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
       // Snow
       setBgClass("bg-gradient-to-br from-blue-200 to-white");
