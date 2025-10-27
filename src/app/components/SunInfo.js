@@ -98,6 +98,8 @@ export default function SunInfo({ daily }) {
   const transitionTiming =
     "transform 0.8s cubic-bezier(.22,1,.36,1), stroke-dashoffset 0.8s cubic-bezier(.22,1,.36,1), x2 0.8s cubic-bezier(.22,1,.36,1)";
 
+    // console.log("SUn Info")
+
   return (
     <div className="rounded-2xl p-5  text-white bg-white/5">
       {/* Header */}

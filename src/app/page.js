@@ -10,6 +10,7 @@ import HourlyForecast from "./components/HourlyForecast";
 import DailyForecast from "./components/DailyForecast";
 import WeatherDetails from "./components/WeatherDetails";
 import SunInfo from "./components/SunInfo";
+import LoadingBar from "./components/LoadingBar";
 
 // Client-only components
 const Background = dynamic(() => import("./components/Background"), { ssr: false });
@@ -71,22 +72,31 @@ console.log("Full weatherData:", weatherData);
         />
 
         {/* Loading / Error */}
-        {loading && <p className="text-white text-center">Loading...</p>}
+        {loading && 
+        <>
+          <p className="text-white text-center">Loading...</p>
+         <LoadingBar/>
+        </>
+  
+  
+        }
         {error && <p className="text-red-400 text-center">{error}</p>}
 
         {/* Weather sections */}
         {weatherData ? (
           <div className="w-full max-w-4xl space-y-6">
             {/* Row: CurrentWeather  */}
-          <div className="flex flex-col items-center justify-center lg:flex-row gap-4">
-            <div className="w-full lg:w-auto">
-              <CurrentWeather weatherData={weatherData} />
-            </div>
-            <div className="w-full lg:w-auto">
-              <SunInfo daily={weatherData?.daily} />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start justify-center">
+        {/* Current Weather - takes 8/12 on md and up */}
+        <div className="md:col-span-8">
+          <CurrentWeather weatherData={weatherData} />
+        </div>
 
+        {/* Sun Info - takes 4/12 on md and up */}
+        <div className="md:col-span-4">
+          <SunInfo daily={weatherData?.daily} />
+        </div>
+      </div>
 
             {/* Daily Forecast */}
             <DailyForecast

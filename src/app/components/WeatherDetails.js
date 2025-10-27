@@ -12,8 +12,9 @@ import {
   FaRegSmile,
   FaMoon,
 } from "react-icons/fa";
-
+import { IoSunny } from "react-icons/io5";
 import {  WiMoonNew, WiMoonWaxingCrescent2 ,WiMoonWaxingGibbous3, WiMoonFirstQuarter, WiMoonFull, WiMoonWaningGibbous2, WiMoonThirdQuarter, WiMoonWaningCrescent5  } from "react-icons/wi";
+import { BsEmojiSunglasses } from "react-icons/bs";
 
 
 function fmt(v, unit = "") {
@@ -223,14 +224,12 @@ export default function WeatherDetails({ weatherData }) {
                 {c.id === "wind_gust" && <FaWind />}
                 {c.id === "humidity" && <FaTint />}
                 {c.id === "dew" && <FaTint />}
-                {c.id === "uv" && <FaSun />}
+                {c.id === "uv" && <BsEmojiSunglasses />}
                 {c.id === "precip" && <FaCloudShowersHeavy />}
                 {c.id === "aqi" && <FaSmog />}
-                {c.id === "pollen" && <FaSeedling />}
-                {c.id === "sun" && <FaSun />}
                 {c.id === "moon" && <FaMoon />}
                 {c.id === "temp" && <FaThermometerHalf />}
-                {!["wind","wind_gust","humidity","dew","uv","precip","aqi","pollen","sun","moon","temp"].includes(c.id) && <FaRegSmile />}
+                {!["wind","wind_gust","humidity","dew","uv","precip","aqi","moon","temp"].includes(c.id) && <FaRegSmile />}
               </div>
             </div>
 

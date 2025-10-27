@@ -164,10 +164,11 @@ export default function CurrentWeather({ weatherData }) {
         </div>
 
       {/* Main weather block */}
-      <div className="flex flex-col sm:flex-row items-start gap-4 my-3 -4">
+      <div className="flex flex-col sm:flex-row items-start  gap-4 my-3 -4">
+        {/* Left Weather Icon */}
         <div className="inline-block">{getWeatherIcon(current?.weathercode ?? 0, isDay)}</div>
-
-        <div className="flex flex-row items-center gap-7 -amber-400 -2 justify-center">
+        {/* Right Details */}
+        <div className="flex flex-row items-center gap-7-amber-400 -2 justify-center">
           <div className="flex flex-col items-start justify-center -red-500 -4">
             <p className="text-6xl font-medium text-white leading-tight">{tempRounded != null ? `${tempRounded}°C` : "—"}</p>
             <p className="text-[17px] text-gray-200 mt-1">{lowToday != null ? `Low: ${lowToday}°` : ""}</p>
@@ -179,11 +180,11 @@ export default function CurrentWeather({ weatherData }) {
           </div>
         </div>
       </div>
-
+      {/* Description */}
       <div className="text-[15px]">{longDescription}</div>
 
       {/* Details */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-5 md:gap-8 mt-7 -3">
+      <div className="  flex flex-row justify-between  mt-5 -3">
         {/* Air Quality */}
         <div className="text-center -amber-300 -2">
           <p className="text-xs sm:text-sm text-gray-100 text-nowrap">Air Quality</p>
@@ -216,13 +217,7 @@ export default function CurrentWeather({ weatherData }) {
           </p>
         </div>
 
-        {/* Pressure */}
-         <div className="text-center -amber-300 -2">
-          <p className="text-xs sm:text-sm text-gray-100">Pressure</p>
-          <p className="font-bold text-sm sm:text-base flex items-center justify-center gap-2 mt-1 text-nowrap">
-            {pressure != null ? `${pressure} mb` : "—"}
-          </p>
-        </div>
+
       </div>
     </div>
   );

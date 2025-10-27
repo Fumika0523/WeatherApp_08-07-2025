@@ -6,8 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { FaCloud, FaSearch, FaWind, FaCloudRain, FaListUl, FaMap, FaSlidersH, FaSnowflake, FaBolt } from 'react-icons/fa';
 import { IoSunny } from "react-icons/io5";
 import { BsFillCloudFogFill } from "react-icons/bs";
-import { BsFillSunsetFill } from "react-icons/bs";
-import { BsFillSunriseFill } from "react-icons/bs";
 
 
 // Map Open-Meteo weather codes to icons

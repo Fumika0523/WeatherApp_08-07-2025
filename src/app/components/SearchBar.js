@@ -73,6 +73,7 @@ export default function SearchBar({ setWeatherData, setLoading, setError, setCoo
         ...baseParams,
       });
       params.append("hourly", hourlyVars);
+  
       params.append("daily", dailyVars);
       return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
     };

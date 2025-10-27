@@ -54,8 +54,6 @@ const CustomTooltip = (ctx, hourly) => {
     </div>
     <div style="font-size:12px; color:#cbd5e1">
       <div>Precip: ${d.precipDisplay ?? 0}${d.precipIsProb ? "%" : " mm"}</div>
-      <div>Wind: ${d.wind ?? "—"} km/h</div>
-      <div>Humidity: ${d.humidity ?? "—"}%</div>
     </div>
   </div>`;
 };
@@ -65,9 +63,15 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
   const [viewMode, setViewMode] = useState("Chart");
   const scrollRef = useRef(null);
 
+  const todayISO = new Date().toISOString().slice(0,10)
+  const effectiveSelectedDay = selectedDay ?? todayISO
+
   const hourly = useMemo(() => {
+   
+    // console.log("weatherData:", weatherData);
     const hRaw = weatherData?.hourly || {};
     const daily = weatherData?.daily || {};
+    // console.log("hRaw",hRaw)
 
     if (!hRaw.time) return [];
 
@@ -90,6 +94,8 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
         }
       }
 
+      // console.log("hourly data")
+
       return {
         key: `hour-${time}`,
         time,
@@ -105,17 +111,43 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
     });
   }, [weatherData]);
 
-  const filteredHourly = useMemo(() => {
-    if (!hourly.length) return [];
-    const today = new Date();
-    const selDate = selectedDay ? new Date(selectedDay) : today;
-    if (isNaN(selDate)) return hourly;
+const filteredHourly = useMemo(() => {
+  if (!hourly.length) return [];
 
+  const selDate = new Date(effectiveSelectedDay);
+
+  // Match by local date
+  const match = hourly.filter(h => {
+    const d = new Date(h.time);
+    return (
+      d.getFullYear() === selDate.getFullYear() &&
+      d.getMonth() === selDate.getMonth() &&
+      d.getDate() === selDate.getDate()
+    );
+  });
+
+  // 🩹 FIX: if no data for today, show first available day instead
+  if (match.length === 0 && hourly.length > 0) {
+    const firstDate = new Date(hourly[0].time);
     return hourly.filter(h => {
       const d = new Date(h.time);
-      return d.toDateString() === selDate.toDateString();
+      return (
+        d.getFullYear() === firstDate.getFullYear() &&
+        d.getMonth() === firstDate.getMonth() &&
+        d.getDate() === firstDate.getDate()
+      );
     });
-  }, [hourly, selectedDay]);
+  }
+
+  return match;
+}, [hourly, effectiveSelectedDay]);
+
+
+console.log("effectiveSelectedDay", effectiveSelectedDay);
+console.log("filteredHourly.length", filteredHourly.length);
+console.log("first available hourly date", new Date(hourly[0]?.time).toLocaleDateString());
+console.log("filteredHourly.length after fix", filteredHourly.length);
+
 
   const isSelectedToday = useMemo(() => {
     if (!filteredHourly.length) return false;
@@ -157,13 +189,13 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
 
   const accent = "#facc15";
   const limitedHourly = filteredHourly.slice(0, 24);
-
+  console.log("limitedHourly",limitedHourly)
   const data = {
-    labels: limitedHourly.map(h => h.timeMs),
+    labels: limitedHourly?.map(h => h.timeMs),
     datasets: [
       {
         label: "Temp",
-        data: limitedHourly.map(h => h.temp),
+        data: limitedHourly?.map(h => h.temp),
         fill: true,
         borderColor: accent,
         backgroundColor: "rgba(250, 204, 21, 0.2)",
@@ -174,7 +206,7 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
       },
       {
         label: "Feels like",
-        data: limitedHourly.map(h => h.feels),
+        data: limitedHourly?.map(h => h.feels),
         borderColor: "#f97316",
         borderDash: [4, 6],
         tension: 0.4,
@@ -184,6 +216,7 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
       },
     ],
   };
+  console.log("data",data)
 
   const options = {
     responsive: true,
@@ -248,7 +281,12 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
         </div>
       </div>
 
-      {!filteredHourly.length && <div className="text-center text-gray-300">No hourly data for selected day</div>}
+      {!filteredHourly.length && weatherData && (
+  <div className="text-center text-gray-300">
+    No hourly data for {effectiveSelectedDay}
+  </div>
+)}
+
 
       {filteredHourly.length > 0 && viewMode === "Chart" && (
         <div className="w-full h-64 mb-4 relative">
@@ -261,7 +299,7 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
         <div className="relative">
           <button
             aria-label="Previous hours"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm flex items-center justify-center"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 h-[40px] rounded-sm flex items-center justify-center"
             onClick={() => scrollBy(-4)}
           >
             <IoMdArrowDropleft className="text-2xl" />
@@ -290,7 +328,7 @@ export default function HourlyForecast({ weatherData, selectedDay }) {
 
           <button
             aria-label="Next hours"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black h-[40px] rounded-sm flex items-center justify-center"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/90 h-[40px] rounded-sm flex items-center justify-center"
             onClick={() => scrollBy(4)}
           >
             <IoMdArrowDropright className="text-2xl" />
